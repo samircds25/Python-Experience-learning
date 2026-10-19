@@ -1,0 +1,145 @@
+import json
+from pathlib import Path
+
+DATA_FILE = Path("leaderboard.json")
+
+
+# Load saved data
+def load_data():
+    if DATA_FILE.exists():
+        try:
+            return json.loads(
+                DATA_FILE.read_text(encoding="utf-8")
+            )
+        except (json.JSONDecodeError, OSError):
+            print("Error reading saved data.")
+    return {}
+
+
+# Save data to file
+def save_data(scores):
+    DATA_FILE.write_text(
+        json.dumps(scores, indent=4),
+        encoding="utf-8"
+    )
+
+
+# Display leaderboard
+def show_leaderboard(scores):
+    ranked = sorted(
+        scores.items(),
+        key=lambda item: item[1],
+        reverse=True
+    )
+
+    if not ranked:
+        print("\nLeaderboard is empty!")
+        return
+
+    print("\n========== LEADERBOARD ==========")
+    print(f"{'Rank':<8}{'Name':<20}{'Score':>8}")
+    print("-" * 36)
+
+    for rank, (name, score) in enumerate(
+        ranked, start=1
+    ):
+        print(f"{rank:<8}{name:<20}{score:>8}")
+
+    print("-" * 36)
+    print(
+        f"Top Performer: {ranked[0][0]} "
+        f"({ranked[0][1]} points)"
+    )
+
+
+# Accept a valid integer score
+def get_score(prompt):
+    while True:
+        try:
+            score = int(input(prompt))
+            if score < 0:
+                print("Score cannot be negative.")
+                continue
+            return score
+        except ValueError:
+            print("Please enter a valid whole number.")
+
+
+# Add participant
+def add_participant(scores):
+    name = input("Enter participant name: ").strip()
+
+    if not name:
+        print("Name cannot be empty.")
+        return
+
+    if name in scores:
+        print("Participant already exists!")
+        return
+
+    score = get_score("Enter initial score: ")
+    scores[name] = score
+    save_data(scores)
+
+    print(f"{name} added successfully!")
+
+
+# Update participant score
+def update_score(scores):
+    name = input("Enter participant name: ").strip()
+
+    if name not in scores:
+        print("Participant not found!")
+        return
+
+    score = get_score("Enter new total score: ")
+    scores[name] = score
+    save_data(scores)
+
+    print(f"Score updated successfully for {name}!")
+
+
+# Main program
+def main():
+    scores = load_data()
+
+    print("\n================================")
+    print(" REAL-TIME LEADERBOARD SYSTEM")
+    print("================================")
+
+    while True:
+        print("\n1. Add Participant")
+        print("2. Update Score")
+        print("3. Display Leaderboard")
+        print("4. Show Top Performer")
+        print("5. Exit")
+
+        choice = input("Enter your choice (1-5): ").strip()
+
+        if choice == "1":
+            add_participant(scores)
+
+        elif choice == "2":
+            update_score(scores)
+
+        elif choice == "3":
+            show_leaderboard(scores)
+
+        elif choice == "4":
+            if scores:
+                show_leaderboard(scores)
+            else:
+                print("No participants available.")
+
+        elif choice == "5":
+            save_data(scores)
+            print("Data saved successfully!")
+            print("Thank you for using the system.")
+            break
+
+        else:
+            print("Invalid choice! Select 1 to 5.")
+
+
+if __name__ == "__main__":
+    main()
